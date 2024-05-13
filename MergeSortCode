@@ -1,0 +1,67 @@
+using System;
+
+namespace sortingalgos
+{
+    class Program
+    {
+        public static void MergeSort(int[] small)
+        {
+            if (small.Length <= 1)
+                return;
+            int mid = small.Length / 2;
+
+            int[] left = new int[mid];
+            int[] right = new int[small.Length - mid];
+
+            for (int i = 0; i < mid; i++)
+                left[i] = small[i];
+
+            for (int i = mid; i < small.Length; i++)
+                right[i - mid] = small[i];
+            MergeSort(left);
+            MergeSort(right);
+
+            Merge(small, left, right);
+        }
+
+        private static void Merge(int[] small, int[] left, int[] right)
+        {
+            int i = 0, j = 0, k = 0;
+
+            while (i < left.Length && j < right.Length)
+            {
+                if (left[i] <= right[j])
+                    small[k++] = left[i++];
+                else
+                    small[k++] = right[j++];
+            }
+            while (i < left.Length)
+                small[k++] = left[i++];
+
+            while (j < right.Length)
+                small[k++] = right[j++];
+        }
+        static void Main(string[] args)
+        {
+            int[] small = { 79, 69, 9, 95, 65, 49, 65, 40, 27, 95 };
+            Console.Write("Original array:");
+            Console.WriteLine();
+            foreach (int i in small)
+            {
+                Console.Write(i + " ");
+            }
+
+
+            MergeSort(small);
+            Console.WriteLine();
+            Console.WriteLine("Sorted array:");
+
+            foreach (int i in small)
+            {
+                Console.Write(i + " ");
+            }
+        }
+
+
+    }
+}
