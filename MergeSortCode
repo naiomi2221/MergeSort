@@ -1,67 +1,193 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using ExcelDataReader;
+using System.Diagnostics;
 
 namespace sortingalgos
 {
     class Program
     {
-        public static void MergeSort(int[] small)
+        public static void MergeSort(int[] array)
         {
-            if (small.Length <= 1)
+            if (array.Length <= 1)
                 return;
-            int mid = small.Length / 2;
 
+            int mid = array.Length / 2;
             int[] left = new int[mid];
-            int[] right = new int[small.Length - mid];
+            int[] right = new int[array.Length - mid];
 
             for (int i = 0; i < mid; i++)
-                left[i] = small[i];
+                left[i] = array[i];
 
-            for (int i = mid; i < small.Length; i++)
-                right[i - mid] = small[i];
+            for (int i = mid; i < array.Length; i++)
+                right[i - mid] = array[i];
+
             MergeSort(left);
             MergeSort(right);
 
-            Merge(small, left, right);
+            Merge(array, left, right);
         }
 
-        private static void Merge(int[] small, int[] left, int[] right)
+        private static void Merge(int[] array, int[] left, int[] right)
         {
             int i = 0, j = 0, k = 0;
 
             while (i < left.Length && j < right.Length)
             {
                 if (left[i] <= right[j])
-                    small[k++] = left[i++];
+                    array[k++] = left[i++];
                 else
-                    small[k++] = right[j++];
+                    array[k++] = right[j++];
             }
             while (i < left.Length)
-                small[k++] = left[i++];
+                array[k++] = left[i++];
 
             while (j < right.Length)
-                small[k++] = right[j++];
+                array[k++] = right[j++];
+        }
+
+        private static List<int> ReadAndParseColumn(string path, int columnIndex)//meant to parse values from the csv file to a readable format for sorting.
+        {
+            List<int> columnData = new List<int>();
+            try
+            {
+                using (StreamReader sr = new StreamReader(path))
+                {
+                    string line;
+                    int lineNumber = 0;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (lineNumber > 0)
+                        {
+                            string[] values = line.Split(';'); 
+                            if (values.Length > columnIndex && int.TryParse(values[columnIndex], out int number))
+                            {
+                                columnData.Add(number);
+                            }
+                        }
+                        lineNumber++;
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"Access to the file was denied: {ex.Message}");
+            }
+            return columnData;
+        }
+        static List<int> ReadAndParseExcelColumn(string path, int columnIndex)//meant to parse values from the Excel file to a readable format for sorting.
+        {
+            List<int> columnData = new List<int>();
+            try
+            {
+                using (var stream = File.Open(path, FileMode.Open, FileAccess.Read))
+                {
+                    using (var reader = ExcelReaderFactory.CreateReader(stream))
+                    {
+                        while (reader.Read())
+                        {
+                            if (reader.GetValue(columnIndex) != null && int.TryParse(reader.GetValue(columnIndex).ToString(), out int value))
+                            {
+                                columnData.Add(value);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"Access to the file was denied: {ex.Message}");
+            }
+            return columnData;
         }
         static void Main(string[] args)
         {
+            //Creating a stopwatch to time the code****
+            Stopwatch sw = new Stopwatch();
+            sw.Start();//timer begin
+            //begins SMALL sorting****************************************************************
             int[] small = { 79, 69, 9, 95, 65, 49, 65, 40, 27, 95 };
-            Console.Write("Original array:");
-            Console.WriteLine();
+            Console.Write("Original array: \n");
             foreach (int i in small)
             {
                 Console.Write(i + " ");
             }
-
-
-            MergeSort(small);
             Console.WriteLine();
-            Console.WriteLine("Sorted array:");
-
+            Console.WriteLine("\nSorted array:");
             foreach (int i in small)
             {
                 Console.Write(i + " ");
             }
+            Console.WriteLine() ;
+            Console.WriteLine();//the small array sorting ends here (i got confused where they started and ended.)
+            sw.Stop();//ending the timer
+            TimeSpan elapsedTime = sw.Elapsed;
+            Console.WriteLine("Time to compile: " + elapsedTime.TotalSeconds + " seconds.");//tells you the time it took to run.
+            //ends SMALL sorting*********************************************************************
+            //begins medium sorting *****************************************************************
+            string path = @"C:\Users\naiom\Downloads\wine+quality\winequality-red.csv";
+            Stopwatch sw2 = new Stopwatch();
+            sw2.Start();
+            List<int> columnData = ReadAndParseColumn(path, 11); 
+            if (columnData != null && columnData.Count > 0)
+            {
+                int[] dataArray = columnData.ToArray();
+                Console.WriteLine("Original medium dataset:");
+                foreach (int i in dataArray)
+                {
+                    Console.Write(i + " ");
+                }
+
+                MergeSort(dataArray);
+                Console.WriteLine();
+                Console.WriteLine("\nSorted column data:");
+                foreach (int i in dataArray)
+                {
+                    Console.Write(i + " ");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No data to sort or the specified column index is invalid.");
+            }
+            sw2.Stop();
+            TimeSpan elapsedTime2 = sw2.Elapsed;
+            Console.WriteLine();
+            Console.WriteLine("The time to compile was: " + elapsedTime2.TotalSeconds + " seconds.");
+            Console.WriteLine("\n");
+            //ends medium sorting***********************************************************************
+            //begins LARGE sorting**********************************************************************
+            string beansPath = @"C:\Users\naiom\OneDrive\Desktop\beansdata.xlsx";
+            Stopwatch sw3 = new Stopwatch();
+            sw3.Start();
+            List<int> largeExcelColumnData = ReadAndParseExcelColumn(beansPath, 0);
+
+            if (largeExcelColumnData != null && largeExcelColumnData.Count > 0)
+            {
+                int[] dataArray = largeExcelColumnData.ToArray();
+                Console.WriteLine("\nOriginal large dataset:");
+                foreach (int i in dataArray)
+                {
+                    Console.Write(i + " ");
+                }
+
+                MergeSort(dataArray);
+                Console.WriteLine("\nSorted large dataset:");
+                foreach (int i in dataArray)
+                {
+                    Console.Write(i + " ");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No data to sort or the specified column index is invalid.");
+            }
+            sw3.Stop();
+            TimeSpan elapsedTime3 = sw3.Elapsed;
+            Console.WriteLine();
+            Console.WriteLine("Time to compile dataset 3: " + elapsedTime3.TotalSeconds + " seconds.");
         }
-
-
     }
 }
+
